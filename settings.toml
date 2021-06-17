@@ -1,1 +1,6 @@
 env_file = "environment/Tennis.app"
+seed = 24
+cores = 4
+
+[PPO]
+epochs_mean_rewards = 100 # Number of epochs to compute mean rewards

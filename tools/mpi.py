@@ -6,6 +6,11 @@ from mpi4py import MPI
 from typing import Sequence, Tuple, Union
 
 
+def proc_id() -> int:
+    """Get rank of calling process."""
+    return MPI.COMM_WORLD.Get_rank()
+
+
 def mpi_fork(n: int, bind_to_core: bool = False) -> None:
     """
     Re-launches the current script with workers linked by MPI. Also, terminates the original process that launched it.

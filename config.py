@@ -9,4 +9,7 @@ settings = Dynaconf(
 
 settings.validators.validate()
 
+assert isinstance(settings.seed, int)
+assert isinstance(settings.cores, int)
 assert isinstance(settings.env_file, str)
+assert isinstance(settings.PPO.epochs_mean_rewards, int)
