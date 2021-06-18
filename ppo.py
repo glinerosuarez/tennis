@@ -7,8 +7,8 @@ from config import settings
 from buffer import PPOBuffer
 from torch.optim import Adam
 from collections import deque
-from agents import ActorCritic
 from tools.log import EpochLogger
+from agents import MultiActorCritic
 from unityagents import UnityEnvironment
 from typing import Dict, Callable, Tuple
 
@@ -76,7 +76,7 @@ class PPO:
         self.env, self.brain_name, state_size, action_size, state = env_fn(seed)
 
         # Create actor-critic module
-        self.ac = ActorCritic(
+        self.mac = MultiActorCritic(
             state_size=state_size,
             action_size=action_size,
             seed=seed,
@@ -86,23 +86,30 @@ class PPO:
         )
 
         # Sync params across processes
-        mpi.sync_params(self.ac)
+        mpi.sync_params(self.mac.agent1)
+        mpi.sync_params(self.mac.agent2)
 
         # Count variables
-        var_counts = tuple(nets.count_vars(module) for module in [self.ac.pi, self.ac.v])
+        var_counts = tuple(
+            nets.count_vars(module)
+            for module in [self.mac.agent1.pi, self.mac.agent1.v, self.mac.agent2.pi, self.mac.agent2.v]
+        )
         self.logger.log('\nNumber of parameters: \t pi: %d, \t v: %d\n' % var_counts)
 
         # Set up experience buffer
         self.steps_per_epoch = steps_per_epoch
         self.local_steps_per_epoch = int(self.steps_per_epoch / mpi.num_procs())
-        self.buf = PPOBuffer(state_size, action_size, self.local_steps_per_epoch, gamma, lam)
+        self.buf1 = PPOBuffer(state_size, action_size, self.local_steps_per_epoch, gamma, lam)
+        self.buf2 = PPOBuffer(state_size, action_size, self.local_steps_per_epoch, gamma, lam)
 
         # Set up optimizers for policy and value function
-        self.policy_optimizer = Adam(self.ac.pi.parameters(), lr=policy_lr)
-        self.value_optimizer = Adam(self.ac.v.parameters(), lr=value_lr)
+        self.policy_optimizer1 = Adam(self.mac.agent1.pi.parameters(), lr=policy_lr)
+        self.value_optimizer1 = Adam(self.mac.agent1.v.parameters(), lr=value_lr)
+        self.policy_optimizer2 = Adam(self.mac.agent2.pi.parameters(), lr=policy_lr)
+        self.value_optimizer2 = Adam(self.mac.agent2.v.parameters(), lr=value_lr)
 
         # Set up model saving
-        self.logger.setup_pytorch_saver(self.ac)
+        self.logger.setup_pytorch_saver(self.mac)
 
         # Save properties.
         self.clip_ratio = clip_ratio

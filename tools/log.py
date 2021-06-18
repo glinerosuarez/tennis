@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import os.path as osp
 from config import settings
-from agents import ActorCritic
+from agents import ActorCritic, MultiActorCritic
 from typing import Dict, Optional
 from tools import mpi, serialization
 from matplotlib import pyplot as plt
@@ -177,7 +177,7 @@ class Logger:
             if hasattr(self, 'pytorch_saver_elements'):
                 self._pytorch_simple_save(itr)
 
-    def setup_pytorch_saver(self, agent: ActorCritic) -> None:
+    def setup_pytorch_saver(self, agent: MultiActorCritic) -> None:
         """
         Set up easy model saving for a single PyTorch model. Because PyTorch saving and loading is especially painless,
         this is very minimal; we just need references to whatever we would like to pickle. This is integrated into the
@@ -186,8 +186,10 @@ class Logger:
             agent: PyTorch model or serializable object containing PyTorch models.
         """
         self.pytorch_saver_elements = {
-            "policy_state_dict": agent.pi.state_dict(),
-            "value_state_dict": agent.v.state_dict()
+            "policy_state_dict1": agent.agent1.pi.state_dict(),
+            "value_state_dict1": agent.agent1.v.state_dict(),
+            "policy_state_dict2": agent.agent2.pi.state_dict(),
+            "value_state_dict2": agent.agent2.v.state_dict()
         }
 
     def _pytorch_simple_save(self, itr: int = None) -> None:

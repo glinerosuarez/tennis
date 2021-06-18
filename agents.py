@@ -120,3 +120,38 @@ class ActorCritic(Module):
     def act(self, obs):
         """ Behaves the same as ``step`` but only returns ``a``. """
         return self.step(obs)[0]
+
+
+class MultiActorCritic:
+    def __init__(
+            self, state_size: int, action_size: int, seed: int, layers: int, hidden_nodes: int, activation: Activation
+    ):
+        """Initialize parameters and build model for two ActorCritic Agents.
+        Params
+        ======
+            state_size: Dimension of each state
+            action_size: Dimension of each action
+            seed: Random seed
+        """
+
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+
+        self.agent1 = ActorCritic(
+            state_size=state_size,
+            action_size=action_size,
+            seed=seed,
+            layers=layers,
+            hidden_nodes=hidden_nodes,
+            activation=activation
+        )
+
+        self.agent2 = ActorCritic(
+            state_size=state_size,
+            action_size=action_size,
+            seed=seed,
+            layers=layers,
+            hidden_nodes=hidden_nodes,
+            activation=activation
+        )
+
