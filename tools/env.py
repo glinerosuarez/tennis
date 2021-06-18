@@ -22,9 +22,9 @@ def init_env(
 
     env_info: BrainInfo = env.reset(train_mode=train_mode)[brain_name]
 
-    num_agents: int = len(env_info.agents)  # number of agents interacting with the environment
+    num_agents: int = len(env_info.agents)              # number of agents interacting with the environment
 
-    states = env_info.vector_observations  # initial state
-    state_size: int = states.shape[1]                                                            # get the current stat
+    states = env_info.vector_observations               # initial state
+    state_size: int = states.shape[1]                   # get the current stat
 
     return env, brain_name, num_agents, state_size, action_size, states

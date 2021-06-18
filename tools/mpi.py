@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import numpy as np
+import torch
 from mpi4py import MPI
 from typing import Sequence, Tuple, Union
 
@@ -9,6 +10,11 @@ from typing import Sequence, Tuple, Union
 def proc_id() -> int:
     """Get rank of calling process."""
     return MPI.COMM_WORLD.Get_rank()
+
+
+def num_procs() -> int:
+    """Count active MPI processes."""
+    return MPI.COMM_WORLD.Get_size()
 
 
 def mpi_fork(n: int, bind_to_core: bool = False) -> None:
@@ -51,6 +57,12 @@ def mpi_sum(x):
     return mpi_op(x, MPI.SUM)
 
 
+def mpi_avg(x):
+    """Average a scalar or vector over MPI processes."""
+
+    return mpi_sum(x) / num_procs()
+
+
 def mpi_statistics_scalar(
         x: Sequence[float], with_min_and_max: bool = False
 ) -> Union[Tuple[float, float], Tuple[float, float, float, float]]:
@@ -74,3 +86,40 @@ def mpi_statistics_scalar(
         global_max = mpi_op(np.max(x) if len(x) > 0 else -np.inf, op=MPI.MAX)
         return mean, std, global_min, global_max
     return mean, std
+
+
+def setup_pytorch_for_mpi():
+    """
+    Avoid slowdowns caused by each separate process's PyTorch using more than its fair share of CPU resources.
+    """
+    print(f'Proc {proc_id()}: Reporting original number of Torch threads as {torch.get_num_threads()}.', flush=True)
+    if torch.get_num_threads() == 1:
+        return
+    fair_num_threads = max(int(torch.get_num_threads() / num_procs()), 1)
+    torch.set_num_threads(fair_num_threads)
+    print(f'Proc {proc_id()}: Reporting new number of Torch threads as {torch.get_num_threads()}.', flush=True)
+
+
+def broadcast(x, root=0):
+    MPI.COMM_WORLD.Bcast(x, root=root)
+
+
+def sync_params(module):
+    """ Sync all parameters of module across all MPI processes. """
+
+    if num_procs() == 1:
+        return
+    for p in module.parameters():
+        p_numpy = p.data.numpy()
+        broadcast(p_numpy)
+
+
+def mpi_avg_grads(module):
+    """ Average contents of gradient buffers across MPI processes. """
+
+    if num_procs() == 1:
+        return
+    for p in module.parameters():
+        p_grad_numpy = p.grad.numpy()   # numpy view of tensor data
+        avg_p_grad = mpi_avg(p.grad)
+        p_grad_numpy[:] = avg_p_grad[:]
