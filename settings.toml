@@ -1,15 +1,25 @@
 env_file = "environment/Tennis.app"
-seed = 24
+seed = 50
 cores = 4
+save_freq = 10
+out_dir = "output"
 
 [PPO]
+gamma = 0.99
+lam = 0.97
+clip_ratio = 0.2
+epochs = 2000
+target_kl = 0.01
+max_ep_len = 1000
+steps_per_epoch = 4000
 epochs_mean_rewards = 100 # Number of epochs to compute mean rewards
+env_solved_at = 0.5
 
 [ActorCritic]
 layers = 3
 activation = "tanh"
 hidden_nodes = 64
 policy_lr = 3e-4
-value_lr = 1e-3
+value_lr = 3e-4
 train_policy_iters = 80
 train_value_iters = 80

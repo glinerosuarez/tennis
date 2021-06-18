@@ -1,0 +1,28 @@
+{
+    "ACTORCRITIC":	{
+        "activation":	"tanh",
+        "hidden_nodes":	64,
+        "layers":	3,
+        "policy_lr":	0.0003,
+        "train_policy_iters":	80,
+        "train_value_iters":	40,
+        "value_lr":	1e-06
+    },
+    "CORES":	4,
+    "ENV_FILE":	"environment/Tennis.app",
+    "OUT_DIR":	"output",
+    "PPO":	{
+        "clip_ratio":	0.2,
+        "env_solved_at":	0.5,
+        "epochs":	2000,
+        "epochs_mean_rewards":	100,
+        "gamma":	0.99,
+        "lam":	0.97,
+        "max_ep_len":	1000,
+        "steps_per_epoch":	4000,
+        "target_kl":	0.01
+    },
+    "SAVE_FREQ":	10,
+    "SEED":	24,
+    "exp_name":	"reach-ppo"
+}

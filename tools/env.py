@@ -1,6 +1,17 @@
 from typing import Tuple
-
+from config import settings
 from unityagents import BrainParameters, UnityEnvironment, BrainInfo
+
+from tools import mpi
+
+
+def init_tennis_env(seed: int) -> Tuple[UnityEnvironment, str, int, int, int, Tuple[float]]:
+    """
+    Init Reacher environment for training.
+    :param seed: random seed.
+    :return: Environment initial data.
+    """
+    return init_env(settings.env_file, train_mode=True, worker_id=mpi.proc_id(), seed=seed)
 
 
 def init_env(

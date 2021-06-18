@@ -40,5 +40,5 @@ def build_model(state_size: int, n_layers: int, hidden_nodes: int, activation: A
     return Sequential(layers)
 
 
-def count_vars(module: Module) -> float:
+def count_vars(module: Module) -> int:
     return sum([np.prod(p.shape) for p in module.parameters()])
