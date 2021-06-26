@@ -1,4 +1,3 @@
-from tools.nets import Activation
 from dynaconf import Dynaconf, Validator
 
 
@@ -12,7 +11,6 @@ settings = Dynaconf(
         Validator("PPO.target_kl", gte=0.01, lte=0.05),
         Validator("ActorCritic.value_lr", gte=0.000001, lte=0.01),
         Validator("ActorCritic.policy_lr", gte=0.0001, lte=0.01),
-        Validator("ActorCritic.activation", is_in=Activation.get_values()),
     ]
 )
 
@@ -29,11 +27,9 @@ assert isinstance(settings.PPO.gamma, float)
 assert isinstance(settings.PPO.max_ep_len, int)
 assert isinstance(settings.PPO.target_kl, float)
 assert isinstance(settings.PPO.clip_ratio, float)
-assert isinstance(settings.ActorCritic.layers, int)
 assert isinstance(settings.PPO.steps_per_epoch, int)
 assert isinstance(settings.PPO.env_solved_at, float)
 assert isinstance(settings.ActorCritic.value_lr, float)
-assert isinstance(settings.ActorCritic.activation, str)
 assert isinstance(settings.PPO.epochs_mean_rewards, int)
 assert isinstance(settings.ActorCritic.policy_lr, float)
 assert isinstance(settings.ActorCritic.hidden_nodes, int)

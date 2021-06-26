@@ -1,8 +1,6 @@
 {
     "ACTORCRITIC":	{
-        "activation":	"tanh",
         "hidden_nodes":	64,
-        "layers":	2,
         "policy_lr":	0.0003,
         "train_policy_iters":	80,
         "train_value_iters":	80,
@@ -23,6 +21,6 @@
         "target_kl":	0.01
     },
     "SAVE_FREQ":	10,
-    "SEED":	50,
+    "SEED":	100,
     "exp_name":	"reach-ppo"
 }

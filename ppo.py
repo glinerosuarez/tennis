@@ -80,9 +80,7 @@ class PPO:
             state_size=state_size,
             action_size=action_size,
             seed=seed,
-            layers=settings.ActorCritic.layers,
             hidden_nodes=settings.ActorCritic.hidden_nodes,
-            activation=settings.ActorCritic.activation
         )
 
         # Sync params across processes
