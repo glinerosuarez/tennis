@@ -3,20 +3,18 @@ import numpy as np
 from torch import Tensor
 from typing import Optional, Tuple
 from torch.distributions.normal import Normal
-from tools.nets import Activation, build_model
 from torch.nn import Parameter, Sequential, Module
+from tools.nets import build_actor_model, build_critic_model
 
 
 class Actor(Module):
-    def __init__(self, state_size: int, action_size: int, layers: int, hidden_nodes: int, activation: Activation):
+    def __init__(self, state_size: int, action_size: int, hidden_nodes: int):
         super(Actor, self).__init__()
 
         self.log_std: Parameter = Parameter(-0.5 * torch.ones(action_size, dtype=torch.float32))
-        self.mu_net: Sequential = build_model(
+        self.mu_net: Sequential = build_actor_model(
             state_size=state_size,
-            n_layers=layers,
             hidden_nodes=hidden_nodes,
-            activation=activation,
             o_dim=action_size
         )
 
@@ -52,16 +50,10 @@ class Actor(Module):
 
 
 class Critic(Module):
-    def __init__(self, state_size: int, layers: int, hidden_nodes: int, activation: Activation):
+    def __init__(self, state_size: int, hidden_nodes: int):
         super(Critic, self).__init__()
 
-        self.v_net: Sequential = build_model(
-            state_size=state_size,
-            n_layers=layers,
-            hidden_nodes=hidden_nodes,
-            activation=activation,
-            o_dim=1
-        )
+        self.v_net: Sequential = build_critic_model(state_size=state_size, hidden_nodes=hidden_nodes)
 
     def forward(self, obs: Tensor) -> Tensor:
         """
@@ -79,9 +71,7 @@ class Critic(Module):
 class ActorCritic(Module):
     """ A PyTorch Module with a ``step`` method, an ``act`` method, a ``pi`` module, and a ``v`` module. """
 
-    def __init__(
-            self, state_size: int, action_size: int, seed: int, layers: int, hidden_nodes: int, activation: Activation
-    ):
+    def __init__(self, state_size: int, action_size: int, seed: int, hidden_nodes: int):
         """Initialize parameters and build model.
         Params
         ======
@@ -95,8 +85,8 @@ class ActorCritic(Module):
         torch.manual_seed(seed)
         np.random.seed(seed)
 
-        self.pi = Actor(state_size, action_size, layers, hidden_nodes, activation)
-        self.v = Critic(state_size, layers, hidden_nodes, activation)
+        self.pi = Actor(state_size=state_size, action_size=action_size, hidden_nodes=hidden_nodes)
+        self.v = Critic(state_size=state_size, hidden_nodes=hidden_nodes)
 
     def step(self, obs: Tensor) -> Tuple[np.array, np.array, np.array]:
         """
@@ -120,3 +110,32 @@ class ActorCritic(Module):
     def act(self, obs):
         """ Behaves the same as ``step`` but only returns ``a``. """
         return self.step(obs)[0]
+
+
+class MultiActorCritic:
+    def __init__(self, state_size: int, action_size: int, seed: int, hidden_nodes: int):
+        """Initialize parameters and build model for two ActorCritic Agents.
+        Params
+        ======
+            state_size: Dimension of each state
+            action_size: Dimension of each action
+            seed: Random seed
+        """
+
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+
+        self.agent1 = ActorCritic(
+            state_size=state_size,
+            action_size=action_size,
+            seed=seed,
+            hidden_nodes=hidden_nodes
+        )
+
+        self.agent2 = ActorCritic(
+            state_size=state_size,
+            action_size=action_size,
+            seed=seed,
+            hidden_nodes=hidden_nodes
+        )
+

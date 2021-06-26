@@ -14,6 +14,40 @@ class Activation(Enum):
     RELU = "relu"
 
 
+def build_actor_model(state_size: int, hidden_nodes: int, o_dim: int) -> Sequential:
+    """Build an Actor MLP.
+    Params
+    ======
+        state_size:     Size of the states
+        hidden_nodes:   Number of nodes per hidden layer
+        o_dim:          output dimension
+    """
+    return Sequential(OrderedDict([
+        ("Layer1", Linear(state_size, hidden_nodes)),
+        ("Activation1", ReLU()),
+        ("Layer2", Linear(hidden_nodes, hidden_nodes)),
+        ("Activation2", ReLU()),
+        ("Layer3", Linear(hidden_nodes, o_dim)),
+        ("Activation3", Tanh()),
+    ]))
+
+
+def build_critic_model(state_size: int, hidden_nodes: int) -> Sequential:
+    """Build a Critic MLP.
+    Params
+    ======
+        state_size:     Size of the states
+        hidden_nodes:   Number of nodes per hidden layer
+    """
+    return Sequential(OrderedDict([
+        ("Layer1", Linear(state_size, hidden_nodes)),
+        ("Activation1", ReLU()),
+        ("Layer2", Linear(hidden_nodes, hidden_nodes)),
+        ("Activation2", ReLU()),
+        ("Layer3", Linear(hidden_nodes, 1)),
+    ]))
+
+
 def build_model(state_size: int, n_layers: int, hidden_nodes: int, activation: Activation, o_dim: int) -> Sequential:
     """Build a MLP.
     Params
@@ -40,5 +74,5 @@ def build_model(state_size: int, n_layers: int, hidden_nodes: int, activation: A
     return Sequential(layers)
 
 
-def count_vars(module: Module) -> float:
+def count_vars(module: Module) -> int:
     return sum([np.prod(p.shape) for p in module.parameters()])

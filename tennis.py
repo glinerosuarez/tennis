@@ -1,9 +1,11 @@
 import random
 import numpy as np
 from typing import Dict
+
+from ppo import PPO
 from tools import mpi, log
 from config import settings
-from tools.env import init_env
+from tools.env import init_env, init_tennis_env
 from argparse import ArgumentParser
 
 
@@ -47,7 +49,7 @@ def train(exp_name: str) -> None:
     logger_kwargs: Dict[str, str] = log.setup_logger_kwargs(exp_name, settings.seed, settings.out_dir, True)
 
     ppo: PPO = PPO(
-        env_fn=init_reacher_env,
+        env_fn=init_tennis_env,
         seed=settings.seed,
         steps_per_epoch=settings.PPO.steps_per_epoch,
         epochs=settings.PPO.epochs,
@@ -67,7 +69,6 @@ def train(exp_name: str) -> None:
     ppo.train()
 
 
-
 def main():
     # Get arguments
     parser = ArgumentParser()
@@ -79,8 +80,8 @@ def main():
         action="store_true"
     )
     parser.add_argument(
-        "-c",
-        "--continuous_control",
+        "-p",
+        "--pretrained",
         help="Receives a path to the folder that contains a trained agent to run an epoch in the Reacher environment",
         type=str
     )
@@ -93,8 +94,7 @@ def main():
     args = parser.parse_args()
 
     if args.train:
-        #train(args.exp_name)
-        pass
+        train(args.exp_name)
     elif args.random:
         play_tennis_randomly()
     else:
