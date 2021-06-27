@@ -2,6 +2,12 @@ import random
 import numpy as np
 from typing import Dict
 
+from pathlib import Path
+
+import torch
+from unityagents import BrainInfo
+
+from agents import MultiActorCritic
 from ppo import PPO
 from tools import mpi, log
 from config import settings
@@ -69,10 +75,74 @@ def train(exp_name: str) -> None:
     ppo.train()
 
 
+def play_tennis(path: str, epochs: int) -> None:
+    """
+    Take a two trained agents to run an episode of the Tennis environment.
+    :param epochs: epochs checkpoint to select model.
+    :param path: path to the directory that contains the saved model.
+    """
+    model_path = Path()/path/'pyt_save'/f'model{epochs}.pt'  # Path to saved model file
+    state_dicts = torch.load(model_path)                     # Load Python dict with state_dicts for ActorCritic agent
+
+    policy_state_dict1 = state_dicts['policy_state_dict1']
+    value_state_dict1 = state_dicts['value_state_dict1']
+    policy_state_dict2 = state_dicts['policy_state_dict2']
+    value_state_dict2 = state_dicts['value_state_dict2']
+
+    # Init environment
+    seed = random.randint(0, 1000)
+    env, brain_name, num_agents, state_size, action_size, states = init_env(
+        settings.env_file, False, random.randint(0, 1000), seed
+    )
+
+    # Init agent
+    agents = MultiActorCritic(state_size, action_size, seed, settings.ActorCritic.hidden_nodes)
+
+    # Update state dicts
+    agents.agent1.pi.load_state_dict(policy_state_dict1)
+    agents.agent1.v.load_state_dict(value_state_dict1)
+    agents.agent2.pi.load_state_dict(policy_state_dict2)
+    agents.agent2.v.load_state_dict(value_state_dict2)
+
+    # Run environment
+    agents.agent1.pi.eval()
+    agents.agent1.v.eval()
+    agents.agent2.pi.eval()
+    agents.agent2.v.eval()
+
+    score = 0.0
+    while True:
+        # Get actions for each agent
+        a1 = agents.agent1.act(torch.as_tensor(states[0], dtype=torch.float32))
+        a2 = agents.agent2.act(torch.as_tensor(states[1], dtype=torch.float32))
+        actions = np.stack([a1, a2])
+
+        # Perform chosen actions in the env and get next states
+        brain_info: BrainInfo = env.step(actions)[brain_name]
+        next_states = brain_info.vector_observations
+
+        # Get rewards
+        r1 = brain_info.rewards[0]
+        r2 = brain_info.rewards[1]
+
+        d = any(brain_info.local_done)
+
+        states = next_states
+        score += max([r1, r2])
+
+        if d:
+            break
+
+    env.close()
+
+    print("Score: {}".format(score))
+
+
 def main():
     # Get arguments
     parser = ArgumentParser()
-    parser.add_argument("-n", "--exp_name", type=str, default="reach-ppo")
+    parser.add_argument("-n", "--exp_name", type=str, default="tennis")
+    parser.add_argument("-e", "--epochs", type=str, default="")
     parser.add_argument(
         "-t",
         "--train",
@@ -98,8 +168,7 @@ def main():
     elif args.random:
         play_tennis_randomly()
     else:
-        #smart_cc(args.continuous_control)
-        pass
+        play_tennis(args.pretrained, args.epochs)
 
 
 if __name__ == "__main__":
