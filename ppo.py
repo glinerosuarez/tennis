@@ -131,7 +131,6 @@ class PPO:
             for t in range(self.local_steps_per_epoch):
                 a1, v1, logp1 = self.mac.agent1.step(torch.as_tensor(states[0], dtype=torch.float32))
                 a2, v2, logp2 = self.mac.agent2.step(torch.as_tensor(states[1], dtype=torch.float32))
-                #print(f"epoch: {epoch} value 1: {v1} value 2: {v2}")
                 actions = np.stack([a1, a2])
 
                 brain_info = self.env.step(actions)[self.brain_name]
